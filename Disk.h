@@ -9,11 +9,13 @@
 
 class Disk {
   public: 
+    Disk();
+    ~Disk();
     void write_block(unsigned int block, uint8_t *data);
     void  read_block(unsigned int block, uint8_t *data);
     void reformat();
 
-    uint8_t disk[DISK_SIZE];
+    uint8_t *disk;
     void write_disk_to_file();
     void read_disk_from_file();
 };
