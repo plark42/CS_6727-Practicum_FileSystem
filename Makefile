@@ -1,4 +1,4 @@
-Main:
+Main: Main.o Disk.o
 	g++ -o Main Main.o Disk.o
 
 Main.o: Main.cpp
