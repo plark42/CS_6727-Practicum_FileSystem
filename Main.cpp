@@ -1,26 +1,21 @@
 #include "Disk.h"
+#include "FileSystem.h"
 
 int main(){
-  Disk disk;
-  uint8_t data[4096]; 
+  FileSystem fileSystem;
+  fileSystem.reformat();
 
-  for(int i = 0; i < 4096; i++){
-    char c = 'a' + (i%26);
-    memset(data, c, 4096);
-    disk.write_block(i, data);
+  for(int i = 0; i < 1; i++){
+    uint8_t b = fileSystem.free_list[i];
+    for(uint8_t j = 0; j < 8; j++){
+      printf("%d", (b >> j) & 0x01);
+    }
+    printf("\n");
   }
 
-  /*
-  for(int i = 0; i < 4096; i++){
-    memset(data, '-', 4096);
-    disk->read_block(i, data);
-    data[4096-1] = '\0';
-    printf("%s\n", data);
-  }
-
-  */
-  //return 0;
-
-
+  printf("%d\n", fileSystem.find_empty_block());
+  printf("%d\n", fileSystem.find_empty_block());
+  printf("%d\n", fileSystem.find_empty_block());
+  printf("%d\n", fileSystem.find_empty_block());
+  printf("%d\n", fileSystem.find_empty_block());
 }
-
