@@ -24,9 +24,10 @@ void FileSystem::reformat(){
   allocate(1);
 }
 
-int FileSystem::find_empty_block(){
+unsigned int FileSystem::find_empty_block(){
   uint8_t b, j; 
-  int i, block;
+  unsigned int block;
+  int i;
 
   disk.read_block(0, free_list);
 
@@ -40,7 +41,7 @@ int FileSystem::find_empty_block(){
       }
     }
   }
-  return -1;
+  return 0;
 }
 
 
@@ -66,5 +67,73 @@ void FileSystem::deallocate(unsigned int block){
   //set block to 1 (free)
   free_list[index] |= bit_mask[offset];
   disk.write_block(0, free_list);
-
 }
+
+unsigned int FileSystem::find(char *filename){
+  FCB fcb;
+
+  for(int i = 0; i < DIR_SIZE; i++){
+    if(fcb_dir[i] != 0){
+      disk.read_block(fcb_dir[i], (uint8_t *) &fcb);
+      if(strcmp(filename, fcb.filename) == 0){
+        return fcb_dir[i]; //file exists, return block #
+      }
+    }
+  } 
+  return 0; //nothing found
+}
+
+FCB* FileSystem::open(char *filename){
+  FCB *fcb;
+  fcb = (FCB *) malloc(sizeof(FCB));
+  unsigned int block = find(filename);
+  if(block == 0){
+    //find slot in FCB directory
+    int dir_index = 0; 
+    for(int i = 0; i < DIR_SIZE; i++){
+      if(fcb_dir[i] == 0){
+        dir_index = i;
+        break;
+      }
+    }
+    //error checking (dir_index == 0).. 
+
+    //get emtpy block 
+    block = find_empty_block();
+    printf("HERE block = %d\n", block);
+    if(block == 0){
+      return NULL;
+    }
+
+    //set block as occupied
+    allocate(block);
+
+    //store block # of FCB in directory
+    fcb_dir[dir_index] = block;
+
+    //write FCB directory back to disk
+    disk.write_block(1, (uint8_t *) fcb_dir);
+
+    //create FCB
+    fcb = (FCB *) malloc(sizeof(FCB));
+    strncpy(fcb->filename, filename, LEN_FILENAME);
+    fcb->offset = 0;
+    fcb->fcb_dir_index=block;
+    fcb->size = 0;
+    for(int i = 0; i < NUM_BLOCKS; i++){
+      fcb->ptr[i] = 0;
+    }
+
+    //write FCB to disk at given block 
+    disk.write_block(block, (uint8_t*) fcb);
+
+    return fcb;
+
+    
+  } else {
+    disk.read_block(block, (uint8_t *) fcb);
+    return fcb;
+  }
+  return NULL;
+}
+
