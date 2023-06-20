@@ -12,7 +12,7 @@ typedef struct {
   unsigned int offset; //ofset into file
   unsigned int fcb_dir_index; //backref to location of FCB
   unsigned int size; //file size
-  unsigned int ptr[NUM_BLOCKS]; //singly-indexed allocation 
+  unsigned int ptrs[NUM_BLOCKS]; //singly-indexed allocation 
 } FCB;
 
 class FileSystem {
@@ -35,8 +35,8 @@ class FileSystem {
     //TODO
     FCB* open(char *filename); //open file in read/write mode
     void close(FCB *fcb); 
-    int  read(FCB *fcb, void* buffer, unsigned int num);
-    int write(FCB *fcb, void* buffer, unsigned int num);
+    int  read(FCB *fcb, uint8_t* buffer, unsigned int num);
+    int write(FCB *fcb, uint8_t* buffer, unsigned int num);
     unsigned int find(char *filename); //private (internal)
     void remove(char *filename);
     int seek(FCB *fcb, int offset);

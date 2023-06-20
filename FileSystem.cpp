@@ -27,7 +27,7 @@ void FileSystem::reformat(){
 unsigned int FileSystem::find_empty_block(){
   uint8_t b, j; 
   unsigned int block;
-  int i;
+  int i = 0;
 
   disk.read_block(0, free_list);
 
@@ -100,7 +100,6 @@ FCB* FileSystem::open(char *filename){
 
     //get emtpy block 
     block = find_empty_block();
-    printf("HERE block = %d\n", block);
     if(block == 0){
       return NULL;
     }
@@ -116,12 +115,12 @@ FCB* FileSystem::open(char *filename){
 
     //create FCB
     fcb = (FCB *) malloc(sizeof(FCB));
-    strncpy(fcb->filename, filename, LEN_FILENAME);
+    strcpy(fcb->filename, filename);
     fcb->offset = 0;
-    fcb->fcb_dir_index=block;
+    fcb->fcb_dir_index=dir_index;
     fcb->size = 0;
     for(int i = 0; i < NUM_BLOCKS; i++){
-      fcb->ptr[i] = 0;
+      fcb->ptrs[i] = 0;
     }
 
     //write FCB to disk at given block 
@@ -129,11 +128,84 @@ FCB* FileSystem::open(char *filename){
 
     return fcb;
 
-    
-  } else {
+  } else { //fcb was found in directory
     disk.read_block(block, (uint8_t *) fcb);
     return fcb;
   }
   return NULL;
 }
 
+int FileSystem::write(FCB *fcb, uint8_t *buffer, unsigned int len){
+  //retrieve block of current file offset 
+  // allocate block if necessary 
+  //start writing bytes into buffer
+  // allocate next block if / when necessary 
+  uint8_t block_data[BLOCK_SIZE];
+  unsigned int new_block;
+
+  unsigned int block_index;
+  unsigned int ptrs_index;
+
+  ptrs_index = fcb->offset / BLOCK_SIZE; //determine which block_ptr 
+  block_index = fcb->offset % BLOCK_SIZE; //index within that block
+                                          
+  //if file has no ptrs to allocated blocks
+  if(fcb->ptrs[ptrs_index] == 0){
+    new_block = find_empty_block();
+    //error checking..
+
+    //store allocated block into file's ptrs 
+    fcb->ptrs[ptrs_index] = new_block;
+  
+    //write FCB changes to disk
+    disk.write_block(fcb_dir[fcb->fcb_dir_index], (uint8_t *) fcb);
+
+    //clear block_data
+    memset(block_data, 0x00, BLOCK_SIZE);
+
+  } else {
+    //read block in from disk 
+    disk.read_block(fcb->ptrs[ptrs_index], (uint8_t *) block_data);
+  }
+
+  //go through each byte in buffer 
+  for(unsigned int buffer_index = 0; buffer_index < len; buffer_index++){
+    block_data[block_index] = buffer[buffer_index]; 
+    
+    fcb->offset++;
+    block_index++;
+
+    //go past end of current block
+    if(block_index >= BLOCK_SIZE){
+      block_index = 0;
+
+      //write current block to disk
+      disk.write_block(fcb->ptrs[ptrs_index], (uint8_t *) block_data);
+
+      //get next or new block
+      ptrs_index++;
+      //error checking.. 
+
+      if(fcb->ptrs[ptrs_index] == 0){
+        new_block = find_empty_block();
+        fcb->ptrs[ptrs_index] = new_block;
+        disk.write_block(fcb_dir[fcb->fcb_dir_index], (uint8_t *) fcb);
+        memset(block_data, 0x00, BLOCK_SIZE);
+      } else {
+        disk.read_block(fcb->ptrs[ptrs_index], (uint8_t *) block_data);
+      }
+    }
+  }
+  //write block update to disk 
+  disk.write_block(fcb->ptrs[ptrs_index], (uint8_t *) block_data);
+  
+  //write FCB updates to disk 
+  disk.write_block(fcb_dir[fcb->fcb_dir_index], (uint8_t *) fcb);
+
+  return 0;
+}
+
+void FileSystem::close(FCB *fcb){
+  //on close, write FCB to disk 
+  disk.write_block(fcb_dir[fcb->fcb_dir_index], (uint8_t *) fcb);
+}
