@@ -1,5 +1,13 @@
 #include "FileSystem.h"
 
+/*
+ * TODO: 
+ * - remove(..)
+ * - make size more precise
+ * - error check (?)
+ *
+ */
+
 FileSystem::FileSystem(){
   //load free list and fcb dir from disk
   disk.read_block(0, free_list);
@@ -198,9 +206,14 @@ int FileSystem::write(FCB *fcb, uint8_t *buffer, unsigned int len){
   }
   //write block update to disk 
   disk.write_block(fcb->ptrs[ptrs_index], (uint8_t *) block_data);
+
+  //update file's size
+  if(fcb->size < fcb->offset){
+    fcb->size = fcb->offset;
+  }
   
   //write FCB updates to disk 
-  fcb->size = get_file_size(fcb);
+  //fcb->size = get_file_size(fcb);
   disk.write_block(fcb_dir[fcb->fcb_dir_index], (uint8_t *) fcb);
 
   return 0;
@@ -259,7 +272,7 @@ int get_file_size(FCB *fcb){
 }
 
 void FileSystem::close(FCB *fcb){
-  fcb->size = get_file_size(fcb);
+  //fcb->size = get_file_size(fcb);
 
   //on close, write FCB to disk 
   disk.write_block(fcb_dir[fcb->fcb_dir_index], (uint8_t *) fcb);

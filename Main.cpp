@@ -1,6 +1,15 @@
 #include "Disk.h"
 #include "FileSystem.h"
 
+/*
+ * TODO: 
+ * - read in file, write to FileSystem
+ *  UNIX> ./Main -r file.pdf 
+ *
+ * - read from FileSystem, write to file
+ *  UNIX> ./Main -w file.pdf 
+ */
+
 int main(){
   FileSystem fileSystem;
   //fileSystem.reformat();
@@ -34,16 +43,20 @@ int main(){
   fileSystem.close(fcb);
 
 */
+  //FCB *fcb = fileSystem.open("new.txt");
+  //fileSystem.write(fcb, (uint8_t*) "THIS IS A TEST!!!\n", 17);
+  //fileSystem.close(fcb);
 
   fileSystem.ls();
 
-  FCB *fcb = fileSystem.open("file.txt");
+  fcb = fileSystem.open("file.txt");
+
   printf("fcb->size = %d\n", fcb->size);
   uint8_t buffer[10*BLOCK_SIZE];
   fileSystem.seek(fcb, 0);
   fileSystem.read(fcb, buffer, fcb->size);//->size);
   for(int i = 0; i < 10*BLOCK_SIZE; i++){
-    printf("%c", buffer[i]);
+    //printf("%c", buffer[i]);
   }
   printf("\n");
   fileSystem.close(fcb);
