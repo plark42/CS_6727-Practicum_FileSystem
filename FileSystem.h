@@ -40,7 +40,7 @@ class FileSystem {
     unsigned int find(char *filename); //private (internal)
     void remove(char *filename);
     int seek(FCB *fcb, int offset);
-
-
-
+    void ls();
 };
+
+int get_file_size(FCB *);

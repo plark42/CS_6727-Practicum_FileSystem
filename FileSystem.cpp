@@ -146,8 +146,8 @@ int FileSystem::write(FCB *fcb, uint8_t *buffer, unsigned int len){
   unsigned int block_index;
   unsigned int ptrs_index;
 
-  ptrs_index = fcb->offset / BLOCK_SIZE; //determine which block_ptr 
   block_index = fcb->offset % BLOCK_SIZE; //index within that block
+  ptrs_index = fcb->offset / BLOCK_SIZE; //determine which block_ptr 
                                           
   //if file has no ptrs to allocated blocks
   if(fcb->ptrs[ptrs_index] == 0){
@@ -200,12 +200,71 @@ int FileSystem::write(FCB *fcb, uint8_t *buffer, unsigned int len){
   disk.write_block(fcb->ptrs[ptrs_index], (uint8_t *) block_data);
   
   //write FCB updates to disk 
+  fcb->size = get_file_size(fcb);
   disk.write_block(fcb_dir[fcb->fcb_dir_index], (uint8_t *) fcb);
 
   return 0;
 }
 
+int FileSystem::seek(FCB *fcb, int offset){
+  fcb->offset = offset; 
+}
+
+
+int FileSystem::read(FCB *fcb, uint8_t* buffer, unsigned int num){
+  uint8_t block_data[BLOCK_SIZE];
+
+  //grab current block (where offset is) from disk 
+  unsigned int ptrs_index = fcb->offset / BLOCK_SIZE;
+  //add error chekcing
+  disk.read_block(fcb->ptrs[ptrs_index], (uint8_t *) block_data);
+
+  unsigned int block_index = fcb->offset % BLOCK_SIZE;
+  for(int buffer_index = 0; buffer_index < num; buffer_index++){
+    buffer[buffer_index] = block_data[block_index];
+
+    block_index++;
+    fcb->offset++;
+
+    if(block_index >= BLOCK_SIZE){
+      //read in next block 
+      block_index = 0;
+      ptrs_index++;
+
+      //add error chekcing
+      disk.read_block(fcb->ptrs[ptrs_index], (uint8_t *) block_data);
+    }
+  }
+  return 0;
+}
+
+void FileSystem::ls(){
+  FCB fcb; 
+  for(int i = 0; i < DIR_SIZE; i++){
+    if(fcb_dir[i] != 0){
+      disk.read_block(fcb_dir[i], (uint8_t *) &fcb);
+      printf("%s (%d)\n", fcb.filename, fcb.size);
+    }
+  }
+}
+
+int get_file_size(FCB *fcb){
+  int num_blocks = 0;
+  for(int i = 0; i < NUM_BLOCKS; i++){
+    if(fcb->ptrs[i] != 0){
+      num_blocks++;
+    }
+  }
+  return num_blocks * BLOCK_SIZE;
+}
+
 void FileSystem::close(FCB *fcb){
+  fcb->size = get_file_size(fcb);
+
   //on close, write FCB to disk 
   disk.write_block(fcb_dir[fcb->fcb_dir_index], (uint8_t *) fcb);
+
+  //reclaim memory
+  free(fcb);
+
 }
