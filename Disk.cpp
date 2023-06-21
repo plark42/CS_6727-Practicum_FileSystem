@@ -20,6 +20,11 @@ void Disk::read_block(unsigned int block, uint8_t *data){
   memcpy(data, &(disk[index]), BLOCK_SIZE);
 }
 
+void Disk::shred_block(unsigned int block){
+  unsigned int index = block * BLOCK_SIZE;
+  memset(&(disk[index]), 0x0, BLOCK_SIZE);
+}
+
 void Disk::reformat(){
   memset(disk, 0, DISK_SIZE);
 }

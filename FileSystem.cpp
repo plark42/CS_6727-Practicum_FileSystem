@@ -279,5 +279,31 @@ void FileSystem::close(FCB *fcb){
 
   //reclaim memory
   free(fcb);
+}
 
+void FileSystem::remove(char *filename){
+  unsigned int block = find(filename);
+  if(block != 0){
+    FCB fcb;
+    disk.read_block(block, (uint8_t *) &fcb);
+
+    //free the data blocks
+    for(int i = 0; i < NUM_BLOCKS; i++){
+      if(fcb.ptrs[i] != 0){
+        disk.shred_block(fcb.ptrs[i]); //shred disk contents
+        deallocate(fcb.ptrs[i]); //add block to free list 
+      }
+    }
+  
+    //clear the directory entry 
+    fcb_dir[fcb.fcb_dir_index] = 0; //open spot in directory
+    disk.write_block(1, (uint8_t *) fcb_dir); //commit to memory
+
+    //clear the fcb from disk
+    deallocate(block);        //open fcb's spot in free list
+    disk.shred_block(block);  //shred disk contents
+
+  } else {
+    return;
+  }
 }
