@@ -1,5 +1,7 @@
 #include "Disk.h"
 #include "FileSystem.h"
+#include <cstdio>
+#include <sys/stat.h>
 
 /*
  * TODO: 
@@ -14,28 +16,30 @@ int main(){
   FileSystem fileSystem;
   fileSystem.reformat();
 
-  printf("=== LS ===\n");
-  fileSystem.ls();
-  printf("==========\n");
+  FILE *fptr = fopen("../data/plaintext/mov/A.mov", "r");
+  struct stat sb;
+  fstat(fileno(fptr), &sb);
 
-  FCB *fcb = fileSystem.open("test.txt");
-  fileSystem.write(fcb, (uint8_t *) "HELLO\0", 6);
+  char *contents = (char *) malloc(sb.st_size);
+  fread(contents, 1, sb.st_size, fptr);
+
+  FCB *fcb = fileSystem.open("A.mov");
+  fileSystem.write(fcb, (uint8_t*) contents, sb.st_size);
   fileSystem.close(fcb);
 
-  printf("=== LS ===\n");
-  fileSystem.ls();
-  printf("==========\n");
-
-  char data[80];
+  char *data = (char *) malloc(sb.st_size);
+  fcb = fileSystem.open("A.mov");
   fileSystem.seek(fcb, 0);
-  fileSystem.read(fcb, (uint8_t *) data, 6);
-  printf("%s\n", data);
+  fileSystem.read(fcb, (uint8_t *) data, sb.st_size);
+  fileSystem.close(fcb);
 
-  fileSystem.remove("test.txt");
-  printf("=== LS ===\n");
-  fileSystem.ls();
-  printf("==========\n");
+  for(int i = 0; i < sb.st_size; i++){
+    printf("%c", data[i]);
+  }
 
 
+
+  fclose(fptr);
 
 }
+
