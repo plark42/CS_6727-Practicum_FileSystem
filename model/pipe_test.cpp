@@ -23,7 +23,7 @@ int main(){
       close(parent_write_pipe[1]);
 
       //run model
-      execlp("python3", "python3", "predict.py", NULL);
+      execlp("predict.py", "predict.py", NULL);
       fprintf(stderr, "ERROR: predict.py failed\n");
       
     default:
@@ -39,12 +39,21 @@ int main(){
 
       //wait for child
       char rdy;
-      printf("WAITING ON CHILD\n");
       fscanf(f_in, "%c", &rdy);
-      printf("DONE WAITING\n");
 
       uint8_t data[4096];
       FILE *fptr = fopen("enc.bin", "r");
+      fread(data, 1, 4096, fptr);
+      fclose(fptr);
+      fwrite(data, 1, 4096, f_out);
+      fflush(f_out);
+
+      //read response from pipe
+      char resp[100];
+      fscanf(f_in, "%s", resp);
+      printf("enc.bin = %s\n", resp);
+
+      fptr = fopen("pln.bin", "r");
       fread(data, 1, 4096, fptr);
       fclose(fptr);
 
@@ -52,9 +61,8 @@ int main(){
       fclose(f_out);
 
       //read response from pipe
-      char resp[100];
       fscanf(f_in, "%s", resp);
-      printf("%s\n", resp);
+      printf("pln.bin = %s\n", resp);
 
   }
 

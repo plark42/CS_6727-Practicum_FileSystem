@@ -9,14 +9,14 @@ void usage(){
     fprintf(stderr, "usage:  ./Main cmd [option]\n");
     fprintf(stderr, "cmd:    --list, --reformat, --read, --write\n");
     fprintf(stderr, "option: filename\n");
-    fprintf(stderr, "--read:  reads from file into simulation\n");
-    fprintf(stderr, "--write: writes from simulation into file\n");
+    fprintf(stderr, "--write: writes file into simulation\n");
+    fprintf(stderr, "--read:   reads file from simulation\n");
     fprintf(stderr, "E.g., ./Main --reformat\n");
-    fprintf(stderr, "E.g., ./Main --read  /path/to/file.txt file.txt\n");
-    fprintf(stderr, "E.g., ./Main --write file.txt /path/to/file.txt\n");
+    fprintf(stderr, "E.g., ./Main --write /path/to/file.txt file.txt\n");
+    fprintf(stderr, "E.g., ./Main --read  file.txt /path/to/file.txt\n");
 }
 
-void read_into_filesystem(char *path, char *filename){
+void write_into_filesystem(char *path, char *filename){
   FILE *fptr = fopen(path, "r");
   struct stat sb;
   fstat(fileno(fptr), &sb);
@@ -24,24 +24,24 @@ void read_into_filesystem(char *path, char *filename){
   char *contents = (char *) malloc(sb.st_size);
   fread(contents, 1, sb.st_size, fptr);
 
-  FCB *fcb = fileSystem.open(filename);
-  fileSystem.write(fcb, (uint8_t*) contents, sb.st_size);
-  fileSystem.close(fcb);
+  FCB *fcb = fileSystem.fs_open(filename);
+  fileSystem.fs_write(fcb, (uint8_t*) contents, sb.st_size);
+  fileSystem.fs_close(fcb);
 
   free(contents);
 }
 
-void write_from_filesystem(char *filename, char *path){
-  FCB *fcb = fileSystem.open(filename);
+void read_from_filesystem(char *filename, char *path){
+  FCB *fcb = fileSystem.fs_open(filename);
   if(fcb == NULL){
     fprintf(stderr, "ERROR: no such file %s\n", filename);
     return;
   }
 
   char *contents = (char *) malloc(fcb->size);
-  fileSystem.seek(fcb, 0);
-  fileSystem.read(fcb, (uint8_t *) contents, fcb->size);
-  fileSystem.close(fcb);
+  fileSystem.fs_seek(fcb, 0);
+  fileSystem.fs_read(fcb, (uint8_t *) contents, fcb->size);
+  fileSystem.fs_close(fcb);
 
   FILE *fptr = fopen(path, "w");
   fwrite(contents, 1, fcb->size, fptr);
@@ -71,10 +71,10 @@ int main(int argc, char **argv){
   }
 
   if(argc == 4){
-    if(strcmp(argv[1], "--read") == 0){
-      read_into_filesystem(argv[2], argv[3]);
-    } else if(strcmp(argv[1], "--write") == 0){
-      write_from_filesystem(argv[2], argv[3]);
+    if(strcmp(argv[1], "--write") == 0){
+      write_into_filesystem(argv[2], argv[3]);
+    } else if(strcmp(argv[1], "--read") == 0){
+      read_from_filesystem(argv[2], argv[3]);
     } else {
       fprintf(stderr, "invalid cmd\n");
       exit(1);

@@ -1,5 +1,6 @@
 #pragma once
 #include "Disk.h"
+#include <unistd.h>
 
 #define LEN_FILENAME 84
 #define NUM_BLOCKS 1000
@@ -22,12 +23,12 @@ class FileSystem {
 
     void set_safe_write(bool);
     void reformat(); //reset free_list, FCB_dir
-    FCB* open(char *filename); //open file in read/write mode
-    void close(FCB *fcb); 
-    int  read(FCB *fcb, uint8_t* buffer, unsigned int num);
-    int write(FCB *fcb, uint8_t* buffer, unsigned int num);
-    void remove(char *filename);
-    int seek(FCB *fcb, int offset);
+    FCB* fs_open(char *filename); //open file in read/write mode
+    void fs_close(FCB *fcb); 
+    int  fs_read(FCB *fcb, uint8_t* buffer, unsigned int num);
+    int fs_write(FCB *fcb, uint8_t* buffer, unsigned int num);
+    void fs_delete(char *filename);
+    int fs_seek(FCB *fcb, int offset);
     void ls();
 
   private:
@@ -35,10 +36,15 @@ class FileSystem {
     Disk disk;
     uint8_t free_list[BLOCK_SIZE];
     unsigned int fcb_dir[DIR_SIZE];
+    FILE *f_in; //read FROM predictor process
+    FILE *f_out; //writes TO predictor process
+
     unsigned int find_empty_block();
     void   allocate(unsigned int block);
     void deallocate(unsigned int block);
     unsigned int find(char *filename);
-    bool write_to_disk(unsigned int block, uint8_t *data);
+    bool write_to_disk(unsigned int block, uint8_t *data); //true if write OK
+    bool predict(uint8_t *block); //true if predict is plaintext
+    void setup_predictor();
 };
 

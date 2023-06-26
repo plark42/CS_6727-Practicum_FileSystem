@@ -116,7 +116,7 @@ def main():
     random_forest = pickle.load(f)
     f.close()
     yp = random_forest.predict(features)
-    print(yp)
+    print(yp[0])
     
 if __name__ == '__main__':
     main()

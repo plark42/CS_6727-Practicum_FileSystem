@@ -5,6 +5,9 @@ FileSystem::FileSystem(){
   this->safe_write = false;
   disk.read_block(0, free_list);
   disk.read_block(1, (uint8_t *) fcb_dir);
+
+  //setup for predictions
+  setup_predictor();
 }
 
 FileSystem::~FileSystem(){
@@ -84,7 +87,7 @@ unsigned int FileSystem::find(char *filename){
   return 0; //nothing found
 }
 
-FCB* FileSystem::open(char *filename){
+FCB* FileSystem::fs_open(char *filename){
   FCB *fcb;
   fcb = (FCB *) malloc(sizeof(FCB));
   unsigned int block = find(filename);
@@ -136,7 +139,7 @@ FCB* FileSystem::open(char *filename){
   return NULL;
 }
 
-int FileSystem::write(FCB *fcb, uint8_t *buffer, unsigned int len){
+int FileSystem::fs_write(FCB *fcb, uint8_t *buffer, unsigned int len){
   //retrieve block of current file offset 
   // allocate block if necessary 
   //start writing bytes into buffer
@@ -221,12 +224,12 @@ int FileSystem::write(FCB *fcb, uint8_t *buffer, unsigned int len){
   return 0;
 }
 
-int FileSystem::seek(FCB *fcb, int offset){
+int FileSystem::fs_seek(FCB *fcb, int offset){
   fcb->offset = offset; 
 }
 
 
-int FileSystem::read(FCB *fcb, uint8_t* buffer, unsigned int num){
+int FileSystem::fs_read(FCB *fcb, uint8_t* buffer, unsigned int num){
   uint8_t block_data[BLOCK_SIZE];
 
   //grab current block (where offset is) from disk 
@@ -273,8 +276,7 @@ int get_file_size(FCB *fcb){
   return num_blocks * BLOCK_SIZE;
 }
 
-void FileSystem::close(FCB *fcb){
-  //fcb->size = get_file_size(fcb);
+void FileSystem::fs_close(FCB *fcb){
 
   //on close, write FCB to disk 
   disk.write_block(fcb_dir[fcb->fcb_dir_index], (uint8_t *) fcb);
@@ -283,7 +285,7 @@ void FileSystem::close(FCB *fcb){
   free(fcb);
 }
 
-void FileSystem::remove(char *filename){
+void FileSystem::fs_delete(char *filename){
   unsigned int block = find(filename);
   if(block != 0){
     FCB fcb;
@@ -312,9 +314,13 @@ void FileSystem::remove(char *filename){
 
 bool FileSystem::write_to_disk(unsigned int block, uint8_t *data){
   if(safe_write){
-    printf("ERROR: ..\n");
-    return false;
-
+    bool ok = predict(data);
+    if(ok){
+      disk.write_block(block, data);
+      return true;
+    } else {
+      return false;
+    }
   } else {
     disk.write_block(block, data);
     return true;
@@ -323,4 +329,52 @@ bool FileSystem::write_to_disk(unsigned int block, uint8_t *data){
 
 void FileSystem::set_safe_write(bool safe_write){
   this->safe_write = safe_write;
+}
+
+bool FileSystem::predict(uint8_t *block){
+  fwrite(block, 1, BLOCK_SIZE, f_out);
+  fflush(f_out);
+
+  char resp[20];
+  fscanf(f_in, "%s", resp);
+
+  if(strcmp(resp, "plaintext") == 0){
+    return true;
+  } else if(strcmp(resp, "encrypted") == 0) {
+    fprintf(stderr, "WARNING: file encrypted\n");
+    return false; 
+  }
+}
+
+void FileSystem::setup_predictor(){
+  int parent_write_pipe[2];
+  int  child_write_pipe[2];
+
+  pipe(parent_write_pipe);
+  pipe(child_write_pipe );
+  
+  switch(fork()){
+    case -1: 
+      perror("ERROR: failed to fork predictor\n");
+      exit(1);
+    case 0:
+      dup2(parent_write_pipe[0], 0); //child reads from parent's pipe
+      dup2( child_write_pipe[1], 1); //child writes to it's pipe
+
+      close( child_write_pipe[0]);
+      close(parent_write_pipe[1]);
+
+      execlp("python3", "python3", "predict.py", NULL);
+      perror("ERROR: failed to exec predictor\n");
+      exit(1);
+    default:
+      f_in  = fdopen(child_write_pipe[0], "r");
+      f_out = fdopen(parent_write_pipe[1], "w"); 
+
+      close( child_write_pipe[1]);
+      close(parent_write_pipe[0]);
+
+      char rdy;
+      fscanf(f_in, "%c", &rdy);
+  }
 }

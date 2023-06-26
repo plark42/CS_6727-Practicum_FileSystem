@@ -93,12 +93,10 @@ def main():
         sys.stdout.write("!")
         sys.stdout.flush()
 
-        sys.stderr.write("READY\n")
         while True:
-            sys.stderr.write("read()\n")
             data = f.read(4096)
             if len(data) != 4096: 
-                print("ERROR: data must be 4096 bytes")
+                #sys.stderr.write("ERROR: data must be 4096 bytes")
                 exit(1)
             
             #run feature extraction
@@ -106,7 +104,12 @@ def main():
             
             #load random forest
             yp = random_forest.predict(features)
-            print(yp)
+            if yp[0] == 0:
+                print('plaintext')
+            else:
+                print('encrypted')
+            sys.stdout.flush()
+
     except Exception as err:
         exit(0)
             
