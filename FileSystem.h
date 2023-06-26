@@ -20,27 +20,25 @@ class FileSystem {
     FileSystem();
     ~FileSystem();
 
+    void set_safe_write(bool);
     void reformat(); //reset free_list, FCB_dir
-
-    //disk block containing block #s of all FCBs
-    unsigned int fcb_dir[DIR_SIZE];
-
-    Disk disk;
-    uint8_t free_list[BLOCK_SIZE];
-    
-    unsigned int find_empty_block();
-    void   allocate(unsigned int block);
-    void deallocate(unsigned int block);
-
-    //TODO
     FCB* open(char *filename); //open file in read/write mode
     void close(FCB *fcb); 
     int  read(FCB *fcb, uint8_t* buffer, unsigned int num);
     int write(FCB *fcb, uint8_t* buffer, unsigned int num);
-    unsigned int find(char *filename); //private (internal)
     void remove(char *filename);
     int seek(FCB *fcb, int offset);
     void ls();
+
+  private:
+    bool safe_write;
+    Disk disk;
+    uint8_t free_list[BLOCK_SIZE];
+    unsigned int fcb_dir[DIR_SIZE];
+    unsigned int find_empty_block();
+    void   allocate(unsigned int block);
+    void deallocate(unsigned int block);
+    unsigned int find(char *filename);
+    bool write_to_disk(unsigned int block, uint8_t *data);
 };
 
-int get_file_size(FCB *);

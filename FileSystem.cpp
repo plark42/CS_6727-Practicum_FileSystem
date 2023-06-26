@@ -1,15 +1,8 @@
 #include "FileSystem.h"
 
-/*
- * TODO: 
- * - remove(..)
- * - make size more precise
- * - error check (?)
- *
- */
-
 FileSystem::FileSystem(){
   //load free list and fcb dir from disk
+  this->safe_write = false;
   disk.read_block(0, free_list);
   disk.read_block(1, (uint8_t *) fcb_dir);
 }
@@ -188,24 +181,34 @@ int FileSystem::write(FCB *fcb, uint8_t *buffer, unsigned int len){
       block_index = 0;
 
       //write current block to disk
-      disk.write_block(fcb->ptrs[ptrs_index], (uint8_t *) block_data);
+      //disk.write_block(fcb->ptrs[ptrs_index], (uint8_t *) block_data);
+      bool ok = write_to_disk(fcb->ptrs[ptrs_index], (uint8_t *) block_data);
+      if(!ok){
+        return -1;
+      }
 
       //get next or new block
       ptrs_index++;
-      //error checking.. 
 
+      //if no next block, 
       if(fcb->ptrs[ptrs_index] == 0){
-        new_block = find_empty_block();
-        fcb->ptrs[ptrs_index] = new_block;
+        new_block = find_empty_block(); //get new block
+        fcb->ptrs[ptrs_index] = new_block; //keep track in fcb
+        memset(block_data, 0x00, BLOCK_SIZE); //clear block
+
+        //write FCB's changes to disk
         disk.write_block(fcb_dir[fcb->fcb_dir_index], (uint8_t *) fcb);
-        memset(block_data, 0x00, BLOCK_SIZE);
       } else {
         disk.read_block(fcb->ptrs[ptrs_index], (uint8_t *) block_data);
       }
     }
   }
   //write block update to disk 
-  disk.write_block(fcb->ptrs[ptrs_index], (uint8_t *) block_data);
+  //disk.write_block(fcb->ptrs[ptrs_index], (uint8_t *) block_data);
+  bool ok = write_to_disk(fcb->ptrs[ptrs_index], (uint8_t *) block_data);
+  if(!ok){
+    return -1;
+  }
 
   //update file's size
   if(fcb->size < fcb->offset){
@@ -213,7 +216,6 @@ int FileSystem::write(FCB *fcb, uint8_t *buffer, unsigned int len){
   }
   
   //write FCB updates to disk 
-  //fcb->size = get_file_size(fcb);
   disk.write_block(fcb_dir[fcb->fcb_dir_index], (uint8_t *) fcb);
 
   return 0;
@@ -306,4 +308,19 @@ void FileSystem::remove(char *filename){
   } else {
     return;
   }
+}
+
+bool FileSystem::write_to_disk(unsigned int block, uint8_t *data){
+  if(safe_write){
+    printf("ERROR: ..\n");
+    return false;
+
+  } else {
+    disk.write_block(block, data);
+    return true;
+  }
+}
+
+void FileSystem::set_safe_write(bool safe_write){
+  this->safe_write = safe_write;
 }

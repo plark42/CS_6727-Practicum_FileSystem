@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import sys
 import numpy as np
 import pandas as pd
@@ -55,55 +56,67 @@ def get_ascii_freqs(data):
         totals.update({c: counts[c]})
     return [totals[i] for i in totals]
 
-#read in file (4096 bytes)
-if len(sys.argv) != 2:
-    print("usage: ./predict file")
-    print("file: 4096 bytes")
-    exit(1)
-
-#read in bytes
-filename = sys.argv[1]
-f = open(filename, 'rb')
-data = f.read()
-f.close()
-
-if len(data) != 4096: 
-    print("ERROR: data must be 4096 bytes")
-    exit(1)
-
-#convert bytes to ASCII numbers
-data = [int(x) for x in data]
-
-#extract features
-freqs = get_ascii_freqs(data)
-freqs = pd.DataFrame(freqs)
-
-columns = ['kurtosis', 'entropy', 'stdev', 'pi', 'mse',\
-            'chi', 'p', 'autocorr', 'mean', 'bigrams', \
-            'ics', 'hmean', 'skew']
-features = pd.DataFrame(columns=columns)
-features['kurtosis'] = kurtosis(freqs)
-features['entropy'] = entropy(freqs)
-features['stdev'] = freqs.std()
-features['chi'] = chisquare(freqs)[0]
-features['p'] = chisquare(freqs)[1]
-features['autocorr'] = autocorr(data)
-features['mean'] = np.mean(data)
-features['bigrams'] = num_bigrams(data)
-features['ics'] = calc_ics(freqs)
-features['hmean'] = hmean(freqs)
-features['skew'] = skew(freqs)
-features['pi'] = calc_pi(data)
-features['mse'] = calc_mse(data)
-
-#load random forest
-f = open('random_forest.pkl', 'rb')
-random_forest = pickle.load(f)
-f.close()
-yp = random_forest.predict(features)
-print(yp)
+def get_features(data):
+    #convert bytes to ASCII numbers
+    data = [int(x) for x in data]
+    
+    #extract features
+    freqs = get_ascii_freqs(data)
+    freqs = pd.DataFrame(freqs)
+    
+    columns = ['kurtosis', 'entropy', 'stdev', 'pi', 'mse',\
+                'chi', 'p', 'autocorr', 'mean', 'bigrams', \
+                'ics', 'hmean', 'skew']
+    features = pd.DataFrame(columns=columns)
+    features['kurtosis'] = kurtosis(freqs)
+    features['entropy'] = entropy(freqs)
+    features['stdev'] = freqs.std()
+    features['chi'] = chisquare(freqs)[0]
+    features['p'] = chisquare(freqs)[1]
+    features['autocorr'] = autocorr(data)
+    features['mean'] = np.mean(data)
+    features['bigrams'] = num_bigrams(data)
+    features['ics'] = calc_ics(freqs)
+    features['hmean'] = hmean(freqs)
+    features['skew'] = skew(freqs)
+    features['pi'] = calc_pi(data)
+    features['mse'] = calc_mse(data)
+    return features
 
 
 
-#algorithm,filetype,kurtosis,entropy,stdev,pi,mse,chi,p,autocorr,mean,bigrams,ics,hmean,skew,class
-#aes,zip,1.0802615650051948,5.511024726051837,4.1952353926806065,3.32421875,1.2890625,280.5,0.1307481407105556,0.05115611912582848,127.2626953125,3956,1.0062271062271062,14.825624198545757,0.5143840589394348,0
+def main():
+    #read in file (4096 bytes)
+    if len(sys.argv) != 2:
+        print("usage: ./predict.py file")
+        print("  where file: 4096 bytes")
+        print("use --stdin for standard input")
+        print("e.g., cat pln.bin | ./predict.py --stdin")
+        exit(1)
+    
+    #read in bytes
+    filename = sys.argv[1]
+
+    if filename == '--stdin':
+        f = open(0, 'rb')
+    else:
+        f = open(filename, 'rb')
+    data = f.read()
+    f.close()
+    
+    if len(data) != 4096: 
+        print("ERROR: data must be 4096 bytes")
+        exit(1)
+    
+    #run feature extraction
+    features = get_features(data)
+    
+    #load random forest
+    f = open('random_forest.pkl', 'rb')
+    random_forest = pickle.load(f)
+    f.close()
+    yp = random_forest.predict(features)
+    print(yp)
+    
+if __name__ == '__main__':
+    main()

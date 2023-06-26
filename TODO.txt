@@ -1,0 +1,3 @@
+- integrate call to "model/predict.py file" into FileSystem.write(..) 
+- verify predict is 0 before writing to FS
+- test, test, test
