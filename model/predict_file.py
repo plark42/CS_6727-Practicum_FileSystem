@@ -83,32 +83,40 @@ def get_features(data):
     features['mse'] = calc_mse(data)
     return features
 
+
+
 def main():
+    #read in file (4096 bytes)
+    if len(sys.argv) != 2:
+        print("usage: ./predict.py file")
+        print("  where file: 4096 bytes")
+        print("use --stdin for standard input")
+        print("e.g., cat pln.bin | ./predict.py --stdin")
+        exit(1)
+    
+    #read in bytes
+    filename = sys.argv[1]
+
+    if filename == '--stdin':
+        f = open(0, 'rb')
+    else:
+        f = open(filename, 'rb')
+    data = f.read()
+    f.close()
+    
+    if len(data) != 4096: 
+        print("ERROR: data must be 4096 bytes")
+        exit(1)
+    
+    #run feature extraction
+    features = get_features(data)
+    
+    #load random forest
     f = open('random_forest.pkl', 'rb')
     random_forest = pickle.load(f)
     f.close()
-
-    try: 
-        f = open(0, 'rb')
-        sys.stdout.write("!")
-        sys.stdout.flush()
-
-        sys.stderr.write("READY\n")
-        while True:
-            sys.stderr.write("read()\n")
-            data = f.read(4096)
-            if len(data) != 4096: 
-                print("ERROR: data must be 4096 bytes")
-                exit(1)
-            
-            #run feature extraction
-            features = get_features(data)
-            
-            #load random forest
-            yp = random_forest.predict(features)
-            print(yp)
-    except Exception as err:
-        exit(0)
-            
+    yp = random_forest.predict(features)
+    print(yp)
+    
 if __name__ == '__main__':
     main()
