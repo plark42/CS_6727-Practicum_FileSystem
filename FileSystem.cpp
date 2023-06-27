@@ -7,7 +7,7 @@ FileSystem::FileSystem(){
   disk.read_block(1, (uint8_t *) fcb_dir);
 
   //setup for predictions
-  setup_predictor();
+  //setup_predictor();
 }
 
 FileSystem::~FileSystem(){
@@ -312,23 +312,38 @@ void FileSystem::fs_delete(char *filename){
   }
 }
 
+long elapsed(struct timespec start, struct timespec end){
+  long t = ((end.tv_sec - start.tv_sec) * 1000000000) 
+            + (end.tv_nsec - start.tv_nsec);
+  return t;
+}
+
 bool FileSystem::write_to_disk(unsigned int block, uint8_t *data){
+  struct timespec start, end;
+  clock_gettime(CLOCK_REALTIME, &start);
   if(safe_write){
     bool ok = predict(data);
     if(ok){
       disk.write_block(block, data);
+      clock_gettime(CLOCK_REALTIME, &end);
+      printf("write: %d\n", elapsed(start, end));
       return true;
     } else {
       return false;
     }
   } else {
     disk.write_block(block, data);
+    clock_gettime(CLOCK_REALTIME, &end);
+    printf("write: %d\n", elapsed(start, end));
     return true;
   }
 }
 
 void FileSystem::set_safe_write(bool safe_write){
   this->safe_write = safe_write;
+  if(safe_write == true){
+    setup_predictor();
+  }
 }
 
 bool FileSystem::predict(uint8_t *block){

@@ -14,7 +14,7 @@ for f in sorted(glob.glob('test.*')):
     infile  = f
 
     for algo in ['aes', 'bf', 'cha', 'des3', 'rc4']:
-        outfile = '%s.%s' % (infile, algo) 
+        outfile = '%s.%s' % (algo, infile) 
         cmd = cmds[algo] % (KEY, infile, outfile)
         print(cmd)
         os.system(cmd)

@@ -1,6 +1,7 @@
 #pragma once
 #include "Disk.h"
 #include <unistd.h>
+#include <sys/time.h>
 
 #define LEN_FILENAME 84
 #define NUM_BLOCKS 1000

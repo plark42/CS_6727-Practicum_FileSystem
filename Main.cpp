@@ -10,9 +10,11 @@ void usage(){
     fprintf(stderr, "cmd:    --list, --reformat, --read, --write\n");
     fprintf(stderr, "option: filename\n");
     fprintf(stderr, "--write: writes file into simulation\n");
+    fprintf(stderr, "--safe_write: safely writes file into simulation\n");
     fprintf(stderr, "--read:   reads file from simulation\n");
     fprintf(stderr, "E.g., ./Main --reformat\n");
     fprintf(stderr, "E.g., ./Main --write /path/to/file.txt file.txt\n");
+    fprintf(stderr, "E.g., ./Main --safe_write /path/to/file.txt file.txt\n");
     fprintf(stderr, "E.g., ./Main --read  file.txt /path/to/file.txt\n");
 }
 
@@ -57,8 +59,6 @@ int main(int argc, char **argv){
     exit(1);
   }
 
-  fileSystem.set_safe_write(true);
-
   if(argc == 2){
     if(strcmp(argv[1], "--reformat") == 0){
       fileSystem.reformat();
@@ -73,13 +73,15 @@ int main(int argc, char **argv){
   if(argc == 4){
     if(strcmp(argv[1], "--write") == 0){
       write_into_filesystem(argv[2], argv[3]);
+    } else if(strcmp(argv[1], "--safe_write") == 0){
+      fileSystem.set_safe_write(true);
+      write_into_filesystem(argv[2], argv[3]);
     } else if(strcmp(argv[1], "--read") == 0){
       read_from_filesystem(argv[2], argv[3]);
     } else {
       fprintf(stderr, "invalid cmd\n");
       exit(1);
     }
-
   }
 }
 
