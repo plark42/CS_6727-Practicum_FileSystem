@@ -22,12 +22,12 @@ class FileSystem {
     FileSystem();
     ~FileSystem();
 
-    void set_safe_write(bool);
+    void set_safe_write(bool, char *);
     void reformat(); //reset free_list, FCB_dir
     FCB* fs_open(char *filename); //open file in read/write mode
     void fs_close(FCB *fcb); 
     int  fs_read(FCB *fcb, uint8_t* buffer, unsigned int num);
-    int fs_write(FCB *fcb, uint8_t* buffer, unsigned int num);
+    bool fs_write(FCB *fcb, uint8_t* buffer, unsigned int num);
     void fs_delete(char *filename);
     int fs_seek(FCB *fcb, int offset);
     void ls();
@@ -46,6 +46,6 @@ class FileSystem {
     unsigned int find(char *filename);
     bool write_to_disk(unsigned int block, uint8_t *data); //true if write OK
     bool predict(uint8_t *block); //true if predict is plaintext
-    void setup_predictor();
+    void setup_predictor(char *model);
 };
 

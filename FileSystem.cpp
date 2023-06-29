@@ -5,9 +5,6 @@ FileSystem::FileSystem(){
   this->safe_write = false;
   disk.read_block(0, free_list);
   disk.read_block(1, (uint8_t *) fcb_dir);
-
-  //setup for predictions
-  //setup_predictor();
 }
 
 FileSystem::~FileSystem(){
@@ -139,7 +136,7 @@ FCB* FileSystem::fs_open(char *filename){
   return NULL;
 }
 
-int FileSystem::fs_write(FCB *fcb, uint8_t *buffer, unsigned int len){
+bool FileSystem::fs_write(FCB *fcb, uint8_t *buffer, unsigned int len){
   //retrieve block of current file offset 
   // allocate block if necessary 
   //start writing bytes into buffer
@@ -187,7 +184,7 @@ int FileSystem::fs_write(FCB *fcb, uint8_t *buffer, unsigned int len){
       //disk.write_block(fcb->ptrs[ptrs_index], (uint8_t *) block_data);
       bool ok = write_to_disk(fcb->ptrs[ptrs_index], (uint8_t *) block_data);
       if(!ok){
-        return -1;
+        return false;
       }
 
       //get next or new block
@@ -210,7 +207,7 @@ int FileSystem::fs_write(FCB *fcb, uint8_t *buffer, unsigned int len){
   //disk.write_block(fcb->ptrs[ptrs_index], (uint8_t *) block_data);
   bool ok = write_to_disk(fcb->ptrs[ptrs_index], (uint8_t *) block_data);
   if(!ok){
-    return -1;
+    return false;
   }
 
   //update file's size
@@ -221,7 +218,7 @@ int FileSystem::fs_write(FCB *fcb, uint8_t *buffer, unsigned int len){
   //write FCB updates to disk 
   disk.write_block(fcb_dir[fcb->fcb_dir_index], (uint8_t *) fcb);
 
-  return 0;
+  return true;
 }
 
 int FileSystem::fs_seek(FCB *fcb, int offset){
@@ -326,7 +323,7 @@ bool FileSystem::write_to_disk(unsigned int block, uint8_t *data){
     if(ok){
       disk.write_block(block, data);
       clock_gettime(CLOCK_REALTIME, &end);
-      printf("write: %d\n", elapsed(start, end));
+      //printf("write: %d\n", elapsed(start, end));
       return true;
     } else {
       return false;
@@ -339,10 +336,10 @@ bool FileSystem::write_to_disk(unsigned int block, uint8_t *data){
   }
 }
 
-void FileSystem::set_safe_write(bool safe_write){
+void FileSystem::set_safe_write(bool safe_write, char *model){
   this->safe_write = safe_write;
   if(safe_write == true){
-    setup_predictor();
+    setup_predictor(model);
   }
 }
 
@@ -356,12 +353,12 @@ bool FileSystem::predict(uint8_t *block){
   if(strcmp(resp, "plaintext") == 0){
     return true;
   } else if(strcmp(resp, "encrypted") == 0) {
-    fprintf(stderr, "WARNING: file encrypted\n");
+    //fprintf(stderr, "WARNING: file encrypted\n");
     return false; 
   }
 }
 
-void FileSystem::setup_predictor(){
+void FileSystem::setup_predictor(char *model){
   int parent_write_pipe[2];
   int  child_write_pipe[2];
 
@@ -379,7 +376,7 @@ void FileSystem::setup_predictor(){
       close( child_write_pipe[0]);
       close(parent_write_pipe[1]);
 
-      execlp("python3", "python3", "predict.py", NULL);
+      execlp("python3", "python3", "predict.py", model, NULL);
       perror("ERROR: failed to exec predictor\n");
       exit(1);
     default:

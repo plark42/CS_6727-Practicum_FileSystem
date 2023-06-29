@@ -74,7 +74,7 @@ int main(int argc, char **argv){
     if(strcmp(argv[1], "--write") == 0){
       write_into_filesystem(argv[2], argv[3]);
     } else if(strcmp(argv[1], "--safe_write") == 0){
-      fileSystem.set_safe_write(true);
+      fileSystem.set_safe_write(true, "random_forest.pkl");
       write_into_filesystem(argv[2], argv[3]);
     } else if(strcmp(argv[1], "--read") == 0){
       read_from_filesystem(argv[2], argv[3]);

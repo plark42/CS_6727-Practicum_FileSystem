@@ -40,11 +40,11 @@ for i in test_index:
     test.append(allfiles[i])
     test.append(allfiles[i+1])
 
-with open('train.txt', 'w') as f:
-    f.write('\n'.join(train))
+# with open('train.txt', 'w') as f:
+#     f.write('\n'.join(train))
 
-with open('test.txt', 'w') as f:
-    f.write('\n'.join(test))
+# with open('test.txt', 'w') as f:
+#     f.write('\n'.join(test))
 
 
 
