@@ -180,10 +180,25 @@ bool FileSystem::fs_write(FCB *fcb, uint8_t *buffer, unsigned int len){
     if(block_index >= BLOCK_SIZE){
       block_index = 0;
 
+      //if end of first block, get file's mime from OS..
+      if(ptrs_index == 0){
+        FILE *tmpfile = fopen("tmp", "w");
+        fwrite(block_data, BLOCK_SIZE, 1, tmpfile);
+        fflush(tmpfile);
+        fclose(tmpfile);
+        tmpfile = popen("file -Ib tmp | awk -F\";\" '{print $1}'", "r");
+        fscanf(tmpfile, "%s", fcb->mime);
+        pclose(tmpfile);
+      }
+
+      //update file's size
+      if(fcb->size < fcb->offset){
+        fcb->size = fcb->offset;
+      }
       //write current block to disk
-      //disk.write_block(fcb->ptrs[ptrs_index], (uint8_t *) block_data);
-      bool ok = write_to_disk(fcb->ptrs[ptrs_index], (uint8_t *) block_data);
+      bool ok = write_to_disk(fcb, fcb->ptrs[ptrs_index], (uint8_t *) block_data);
       if(!ok){
+        fcb->size = fcb->offset = 0;
         return false;
       }
 
@@ -203,10 +218,15 @@ bool FileSystem::fs_write(FCB *fcb, uint8_t *buffer, unsigned int len){
       }
     }
   }
+  //update file's size
+  if(fcb->size < fcb->offset){
+    fcb->size = fcb->offset;
+  }
+
   //write block update to disk 
-  //disk.write_block(fcb->ptrs[ptrs_index], (uint8_t *) block_data);
-  bool ok = write_to_disk(fcb->ptrs[ptrs_index], (uint8_t *) block_data);
+  bool ok = write_to_disk(fcb, fcb->ptrs[ptrs_index], (uint8_t *) block_data);
   if(!ok){
+    fcb->size = fcb->offset = 0;
     return false;
   }
 
@@ -315,23 +335,17 @@ long elapsed(struct timespec start, struct timespec end){
   return t;
 }
 
-bool FileSystem::write_to_disk(unsigned int block, uint8_t *data){
-  struct timespec start, end;
-  clock_gettime(CLOCK_REALTIME, &start);
+bool FileSystem::write_to_disk(FCB *fcb, unsigned int block, uint8_t *data){
   if(safe_write){
-    bool ok = predict(data);
+    bool ok = predict(fcb->mime, data);
     if(ok){
       disk.write_block(block, data);
-      clock_gettime(CLOCK_REALTIME, &end);
-      //printf("write: %d\n", elapsed(start, end));
       return true;
     } else {
       return false;
     }
   } else {
     disk.write_block(block, data);
-    clock_gettime(CLOCK_REALTIME, &end);
-    printf("write: %d\n", elapsed(start, end));
     return true;
   }
 }
@@ -343,50 +357,31 @@ void FileSystem::set_safe_write(bool safe_write, char *model){
   }
 }
 
-bool FileSystem::predict(uint8_t *block){
-  fwrite(block, 1, BLOCK_SIZE, f_out);
-  fflush(f_out);
+bool FileSystem::predict(char *mime, uint8_t *block){
 
-  char resp[20];
-  fscanf(f_in, "%s", resp);
+  //workaround -> write block to file
+  FILE *tmpfile = fopen("tmp", "w");
+  fwrite(block, BLOCK_SIZE, 1, tmpfile);
+  fclose(tmpfile);
+  
+  //workaround -> use popen to run python process
+  char cmd[256];
+  sprintf(cmd, "python3 predict_file.py tmp %s %s", this->model, mime);
+  tmpfile = popen(cmd, "r");
+
+  //get response
+  char resp[256];
+  fscanf(tmpfile, "%s\n", resp);
+  pclose(tmpfile);
 
   if(strcmp(resp, "plaintext") == 0){
     return true;
   } else if(strcmp(resp, "encrypted") == 0) {
-    //fprintf(stderr, "WARNING: file encrypted\n");
+    fprintf(stderr, "WARNING: file encrypted\n");
     return false; 
   }
 }
 
 void FileSystem::setup_predictor(char *model){
-  int parent_write_pipe[2];
-  int  child_write_pipe[2];
-
-  pipe(parent_write_pipe);
-  pipe(child_write_pipe );
-  
-  switch(fork()){
-    case -1: 
-      perror("ERROR: failed to fork predictor\n");
-      exit(1);
-    case 0:
-      dup2(parent_write_pipe[0], 0); //child reads from parent's pipe
-      dup2( child_write_pipe[1], 1); //child writes to it's pipe
-
-      close( child_write_pipe[0]);
-      close(parent_write_pipe[1]);
-
-      execlp("python3", "python3", "predict.py", model, NULL);
-      perror("ERROR: failed to exec predictor\n");
-      exit(1);
-    default:
-      f_in  = fdopen(child_write_pipe[0], "r");
-      f_out = fdopen(parent_write_pipe[1], "w"); 
-
-      close( child_write_pipe[1]);
-      close(parent_write_pipe[0]);
-
-      char rdy;
-      fscanf(f_in, "%c", &rdy);
-  }
+  this->model = strdup(model);
 }

@@ -1,3 +1,5 @@
+all: Test Main 
+
 Test: Test.o Disk.o FileSystem.o
 	g++ -w -o Test Test.o Disk.o FileSystem.o
 

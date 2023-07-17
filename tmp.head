@@ -1,0 +1,76 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<</Subtype/Type1/Type/Font/BaseFont/Helvetica/Encoding/WinAnsiEncoding>>
+endobj
+2 0 obj
+<</Meeting#20Starting#20Date(17 May 2009)/ModDate(D:20200526130602-04'00')/IEEE#20Article#20ID(5207639)/CreationDate(D:20090330133337-08'00')/IEEE#20Issue#20ID(5207632)/Producer(iTextSharp 4.0.7 \(based on iText 2.0.7\); modified using iTextÆ 5.5.6 ©2000-2015 iText Group NV \(AGPL-version\))/Subject(2009 30th IEEE Symposium on Security and Privacy;2009; ; ;10.1109/SP.2009.27)/IEEE#20Publication#20ID(5207631)/Title(Automatic Reverse Engineering of Malware Emulators)/Meeting#20Ending#20Date(20 May 2009)>>
+endobj
+3 0 obj
+<</Subtype/XML/Type/Metadata/Length 3973>>stream
+<?xpacket begin="Ôªø" id="W5M0MpCehiHzreSzNTczkc9d"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 5.1.0-jc003">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description rdf:about=""
+        xmlns:dc="http://purl.org/dc/elements/1.1/"
+        xmlns:prism="http://prismstandard.org/namespaces/basic/3.0/"
+        xmlns:pdf="http://ns.adobe.com/pdf/1.3/"
+        xmlns:xmp="http://ns.adobe.com/xap/1.0/"
+      dc:format="application/pdf"
+      prism:publicationName="2009 30th IEEE Symposium on Security and Privacy"
+      prism:startingPage="94"
+      prism:coverDisplayDate="  May 2009"
+      prism:doi="10.1109/SP.2009.27"
+      prism:endingPage="109"
+      pdf:Producer="iTextSharp 4.0.7 (based on iText 2.0.7); modified using iText¬Æ 5.5.6 ¬©2000-2015 iText Group NV (AGPL-version)"
+      xmp:ModifyDate="2020-05-26T13:06:02-04:00"
+      xmp:MetadataDate="2020-05-26T13:06:02-04:00">
+      <dc:publisher>
+        <rdf:Bag>
+          <rdf:li>IEEE</rdf:li>
+        </rdf:Bag>
+      </dc:publisher>
+      <dc:description>
+        <rdf:Alt>
+          <rdf:li xml:lang="x-repair">2009 30th IEEE Symposium on Security and Privacy;2009; ; ;10.1109/SP.2009.27</rdf:li>
+        </rdf:Alt>
+      </dc:description>
+      <dc:subject>
+        <rdf:Bag>
+          <rdf:li>Malware Analysis</rdf:li>
+          <rdf:li>Obfuscation</rdf:li>
+          <rdf:li>Emulation</rdf:li>
+          <rdf:li>Reverse-engineering</rdf:li>
+        </rdf:Bag>
+      </dc:subject>
+      <dc:title>
+        <rdf:Alt>
+          <rdf:li xml:lang="x-repair">Automatic Reverse Engineering of Malware Emulators</rdf:li>
+        </rdf:Alt>
+      </dc:title>
+      <dc:creator>
+        <rdf:Seq>
+          <rdf:li>Monirul Sharif</rdf:li>
+          <rdf:li>Andrea Lanzi</rdf:li>
+          <rdf:li>Jonathon Giffin</rdf:li>
+          <rdf:li>Wenke Lee</rdf:li>
+        </rdf:Seq>
+      </dc:creator>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                            

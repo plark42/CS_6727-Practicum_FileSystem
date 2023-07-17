@@ -3,14 +3,16 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-#define LEN_FILENAME 84
-#define NUM_BLOCKS 1000
+#define LEN_FILENAME 100
+#define MIME_LEN 100
+#define NUM_BLOCKS 971
 #define DIR_SIZE BLOCK_SIZE/sizeof(unsigned int)
 
 //unsigned int 4 bytes 
-//
+//4096 - (100 + 100 + 4 + 4 + 4) = 3884 / 4 => 971
 typedef struct {
   char filename[LEN_FILENAME]; //
+  char mime[MIME_LEN];
   unsigned int offset; //ofset into file
   unsigned int fcb_dir_index; //backref to location of FCB
   unsigned int size; //file size
@@ -39,13 +41,14 @@ class FileSystem {
     unsigned int fcb_dir[DIR_SIZE];
     FILE *f_in; //read FROM predictor process
     FILE *f_out; //writes TO predictor process
+    char *model;
 
     unsigned int find_empty_block();
     void   allocate(unsigned int block);
     void deallocate(unsigned int block);
     unsigned int find(char *filename);
-    bool write_to_disk(unsigned int block, uint8_t *data); //true if write OK
-    bool predict(uint8_t *block); //true if predict is plaintext
+    bool write_to_disk(FCB *, unsigned int block, uint8_t *data); //true if write OK
+    bool predict(char *mime, uint8_t *block); //true if predict is plaintext
     void setup_predictor(char *model);
 };
 

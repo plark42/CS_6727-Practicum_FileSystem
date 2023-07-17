@@ -7,7 +7,16 @@ from collections import Counter
 from sklearn.metrics import mean_squared_error
 from scipy.stats import entropy, kurtosis, chisquare, hmean, skew
 import pickle
+from sklearn.preprocessing import LabelEncoder 
 
+
+mimes = ['application/gzip', 'application/octet-stream', 'application/pdf', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/x-dosexec', 'application/x-executable', 'application/x-mach-binary', 'application/x-mach-binary\ntmp (for architecture x86_64):\t', 'application/zip', 'audio/mpeg', 'audio/x-wav', 'image/gif', 'image/jpeg', 'image/png', 'text/html', 'text/plain', 'video/mp4', 'video/quicktime']
+labelEncoder = LabelEncoder()
+labelEncoder.fit(mimes)
+
+def mime_to_number(mime):
+    return labelEncoder.transform([mime])[0]
+    
 def autocorr(data):
     return pd.Series(data).autocorr()
 
